@@ -6,6 +6,10 @@
 package com.google.appinventor.client.widgets.dnd;
 
 import com.google.appinventor.client.output.OdeLog;
+import com.google.appinventor.client.editor.simple.SimpleNonVisibleComponentsPanel;
+import com.google.appinventor.client.editor.simple.components.MockNonVisibleComponent;
+import com.google.appinventor.client.editor.simple.components.MockVisibleComponent;
+import com.google.appinventor.client.editor.simple.SimpleVisibleComponentsPanel;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -14,6 +18,7 @@ import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
+
 
 /**
  * Provides support for dragging from a {@link DragSource}
@@ -390,6 +395,8 @@ public final class DragSourceSupport implements MouseListener {
 
     // Initialize hover state
     hoverDropTarget = null;
+    // Indicate this widget is moveable
+    dragWidgetPopup.getWidget().addStyleName("cursorMove");
   }
 
   private void onDragContinue(Widget sender, int x, int y) {
@@ -407,6 +414,13 @@ public final class DragSourceSupport implements MouseListener {
         continue;
       }
 
+      // when widget is moving, indicates the target area that could be dropped.
+      // visible widget cannot be dropped to nonvisible container
+      if (dragWidgetPopup.getWidget().getClass().equals(MockNonVisibleComponent.class)
+          || (dragWidgetPopup.getWidget() instanceof MockVisibleComponent
+              && targetWidget.getClass().equals(SimpleVisibleComponentsPanel.class))){
+          targetWidget.addStyleName("transparentPanel");
+      }
       boolean isInsideTargetWidget = isInside(targetWidget, absX, absY);
 
       if (target == hoverDropTarget) {
@@ -479,6 +493,9 @@ public final class DragSourceSupport implements MouseListener {
     dragSource.onDragEnd();
 
     // Clean up
+    for (DropTarget target : dropTargets) {
+        target.getDropTargetWidget().removeStyleName("transparentPanel");
+    }
     dropTargets = null;
     dragWidgetPopup = null;
     hoverDropTarget = null;
